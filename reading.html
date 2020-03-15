@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <link href="./styles.css" rel="stylesheet" type="text/css">
+
+  <title>jarrilla - Reading List</title>
+</head>
+<body>
+
+<div id="app">
+  <div class="essay">
+    <p>
+      I love getting lost in a good story.
+      However, I don't often make the time to pick up a physical book,
+      so this year I started listening to audiobooks to keep me company
+      when I'm working on tasks that allow it.
+    </p>
+    <p>
+      Below is my reading list. I really only finish reading books
+      I thoroughly enjoy, so you may also consider this a list of my recommendations.
+    </p>
+  </div>
+
+  <div>
+    <div class="mySection">
+      <h3 class="sectionTitle">Currently Reading</h3>
+      <ul>
+        <book-entry
+          v-for="book in nowReadingList"
+          v-bind:book="book"
+        ></book-entry>
+      </ul>
+    </div>
+
+    <div class="mySection">
+      <h3 class="sectionTitle">Past Reading</h3>
+        <div v-for="(month, index) in monthList">
+          <h4 class="subSectionTitle">{{ month }}</h4>
+          <ul>
+            <book-entry
+              v-for="book in haveReadList[index]"
+              v-bind:book="book"
+            ></book-entry>
+          </ul>
+        </div>
+      </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.6.2/tabletop.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="./readingList.js"></script>
+<script>
+//import { LoadSheet } from './readingList.js';
+
+Vue.component('book-entry', {
+  props: ['book'],
+  template: `
+    <li class="bookEntry">
+      <span v-bind:title="book.fullFormat">({{book.format}})</span>
+      <a v-bind:href="book.amazonLink">{{book.title}}</a>, {{book.author}}
+    </li>
+  `,
+});
+
+const app = new Vue({
+  el: "#app",
+  data: {
+    monthList: [],      // array of months with book entires
+    nowReadingList: [], // array of books without 'Finished on' date
+    haveReadList: [],   // [ 0:[ book 1, ... ], 1:[ ... ], ..., 11:[ ... ]]
+  },
+  methods: {
+    fillReadingList: async function() {
+      const [err, data] = await LoadSheet();
+      const { elements } = data['2020'];
+
+      const months = {};
+      const pastList = {};
+      for ( const entry of elements ) {
+        const { Title, Author, Format } = entry;
+        const finishedOn = entry['Finished on'];
+        const amazonLink = entry['Amazon Link'];
+        let fullFormat;
+        switch(Format) {
+          case 'A': fullFormat = 'Audiobook'; break;
+          case 'K': fullFormat = 'Kindle'; break;
+          case 'P': fullFormat = 'Physical'; break;
+        }
+
+        const bookEntry = {
+          title: Title, author: Author, format: Format,
+          amazonLink, fullFormat
+        };
+
+        // if book has a finish date, put in in pastList{}
+        if (finishedOn) {
+          const d = new Date(finishedOn);
+          const mNum = d.getMonth(); // not sure i need this
+          const mStr = d.toLocaleString('default', { month: 'long' });
+
+          months[mStr] = true;
+
+          if ( mStr in pastList ) pastList[mStr].push(bookEntry);
+          else pastList[mStr] = [bookEntry];
+        }
+        // otherwise, add it to nowReading
+        else {
+          this.nowReadingList.push(bookEntry);
+        }
+      }
+
+      // TODO: we should sort months by calendar month in case i get sloppy with my spreadsheet in the future
+
+      // compile lists for past reading
+      for ( const k of Object.getOwnPropertyNames(months) ) {
+        this.monthList.push(k);
+        this.haveReadList.push( pastList[k] );
+      }
+    }
+  },
+  beforeMount() { this.fillReadingList() }
+});
+</script>
+</body>
+</html>

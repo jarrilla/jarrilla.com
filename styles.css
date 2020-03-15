@@ -1,0 +1,19 @@
+@import url('https://fonts.googleapis.com/css?family=Cutive+Mono&display=swap');
+body {
+  font-family: 'Cutive Mono', monospace;
+  font-size: 18px;
+  cursor: default;
+}
+
+/* add single line border to "section" divs */
+div.mySection { border-top: 1px solid black; padding: 10px 5px; }
+
+/* get rid of ugly extra spacing from h* and list elements */
+h3.sectionTitle, h4.subSectionTitle { display: inline; }
+.mySection ul { padding: 0 auto; margin: 0 auto; }
+
+/* style bookEntry elements */
+li.bookEntry { list-style-type: none; }
+.bookEntry span { font-weight: bold; }
+.bookEntry a { font-style: italic; text-decoration: none; color: blue; }
+.bookEntry a:hover { text-decoration: underline; }
